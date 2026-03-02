@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Translating</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #cccccc;
+            --text-secondary: #969696;
+            --accent: #007acc;
+            --border: #3e3e3e;
+            --hover: #2a2d2e;
+            --success: #4ec9b0;
+            --error: #f44747;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .titlebar {
+            height: 32px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+        .titlebar .title { flex: 1; text-align: center; color: var(--text-secondary); }
+        .titlebar .status { font-size: 11px; color: var(--text-secondary); }
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .activity-bar {
+            width: 48px;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 4px;
+            border-right: 1px solid var(--border);
+        }
+        .activity-bar .icon-btn {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .activity-bar .icon-btn:hover { color: var(--text-primary); background: var(--hover); }
+        .activity-bar .icon-btn.active {
+            color: var(--text-primary);
+            border-left-color: var(--accent);
+        }
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .sidebar.hidden { display: none; }
+        .sidebar-header {
+            padding: 10px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-content { padding: 8px; flex: 1; overflow-y: auto; }
+        .sidebar-section {
+            margin-bottom: 12px;
+        }
+        .sidebar-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .workspace-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .translate-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        textarea:focus { outline: none; border-color: var(--accent); }
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #1a8ad4; }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border); }
+        .result-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px;
+            min-height: 80px;
+            white-space: pre-wrap;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 8px 16px;
+            align-items: center;
+            padding: 8px;
+        }
+        .settings-grid label { font-size: 13px; color: var(--text-secondary); }
+        .settings-grid input, .settings-grid select {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+        .settings-grid input[type="checkbox"] { width: 16px; height: 16px; }
+        .settings-grid input[type="range"] { width: 100%; }
+        .mode-panel { display: none; }
+        .mode-panel.active { display: block; }
+        .plugin-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .plugin-card .name { font-weight: bold; color: var(--accent); }
+        .plugin-card .status { font-size: 11px; }
+        .term-list { list-style: none; }
+        .term-list li {
+            padding: 4px 8px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+        .btn-bar { display: flex; gap: 8px; }
+        .label-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div class="titlebar">
+        <span class="title">Vibe Translating</span>
+        <span class="status" id="api-status">Checking API...</span>
+    </div>
+    <div class="main-container">
+        <div class="activity-bar">
+            <button class="icon-btn active" onclick="switchMode('realtime')" title="Real-time Translation">&#x1f504;</button>
+            <button class="icon-btn" onclick="switchMode('book')" title="Book Translation">&#x1f4da;</button>
+            <button class="icon-btn" onclick="switchMode('frame_select')" title="Frame Select">&#x1f5bc;&#xfe0f;</button>
+            <button class="icon-btn" onclick="switchMode('supervision')" title="Supervision">&#x1f4dd;</button>
+            <button class="icon-btn" onclick="switchMode('settings')" title="Settings">&#x2699;&#xfe0f;</button>
+            <button class="icon-btn" onclick="switchMode('plugins')" title="Plugins">&#x1f9e9;</button>
+        </div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header" id="sidebar-title">EXPLORER</div>
+            <div class="sidebar-content" id="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">TERMS</div>
+                    <ul class="term-list" id="term-list"></ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">BOOKMARKS</div>
+                    <ul class="term-list" id="bookmark-list"></ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">MEMORY</div>
+                    <div id="memory-info" style="font-size:12px;padding:4px 8px;color:var(--text-secondary);">No data</div>
+                </div>
+            </div>
+        </div>
+        <div class="workspace">
+            <div class="workspace-content">
+                <!-- Realtime Mode -->
+                <div class="mode-panel active" id="panel-realtime">
+                    <div class="translate-area">
+                        <div class="label-text">Source Text</div>
+                        <textarea id="source-text" placeholder="Enter text to translate..."></textarea>
+                        <div class="btn-bar">
+                            <button class="btn btn-primary" onclick="doTranslate()">Translate</button>
+                            <select id="display-mode" style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);padding:4px 8px;border-radius:3px;">
+                                <option value="translation">Translation Only</option>
+                                <option value="comparison">Side by Side</option>
+                            </select>
+                        </div>
+                        <div class="label-text">Translation</div>
+                        <div class="result-box" id="translation-result">Translation will appear here...</div>
+                    </div>
+                </div>
+                <!-- Book Mode -->
+                <div class="mode-panel" id="panel-book">
+                    <div class="translate-area">
+                        <div class="label-text">Book Content (paste full text or open file)</div>
+                        <textarea id="book-text" placeholder="Paste book content here..." style="min-height:200px;"></textarea>
+                        <div class="btn-bar">
+                            <button class="btn btn-primary" onclick="processBook()">Process Book</button>
+                        </div>
+                        <div id="book-chapters"></div>
+                    </div>
+                </div>
+                <!-- Frame Select Mode -->
+                <div class="mode-panel" id="panel-frame_select">
+                    <div class="translate-area">
+                        <div class="label-text">Frame Select Mode - Draw bounding boxes on images</div>
+                        <div style="border:1px dashed var(--border);min-height:300px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);border-radius:4px;">
+                            Drop an image here or click to upload
+                        </div>
+                    </div>
+                </div>
+                <!-- Supervision Mode -->
+                <div class="mode-panel" id="panel-supervision">
+                    <div class="translate-area">
+                        <div class="label-text">Supervision Mode - Source / Target comparison</div>
+                        <textarea id="supervision-text" placeholder="Paste source text..." style="min-height:150px;"></textarea>
+                        <button class="btn btn-primary" onclick="processSupervisory()">Process</button>
+                        <div id="supervision-pairs" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+                    </div>
+                </div>
+                <!-- Settings -->
+                <div class="mode-panel" id="panel-settings">
+                    <h3 style="margin-bottom:16px;">Settings</h3>
+                    <div class="settings-grid" id="settings-grid"></div>
+                    <div style="margin-top:16px;">
+                        <button class="btn btn-primary" onclick="saveConfig()">Save Settings</button>
+                    </div>
+                </div>
+                <!-- Plugins -->
+                <div class="mode-panel" id="panel-plugins">
+                    <h3 style="margin-bottom:16px;">Plugins</h3>
+                    <div id="plugin-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API = '/api/call';
+        async function apiCall(method, params) {
+            params = params || {};
+            const resp = await fetch(API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({method: method, params: params}),
+            });
+            return resp.json();
+        }
+        function switchMode(mode) {
+            document.querySelectorAll('.icon-btn').forEach(function(b) { b.classList.remove('active'); });
+            if (event && event.target) {
+                var btn = event.target.closest('.icon-btn');
+                if (btn) btn.classList.add('active');
+            }
+            document.querySelectorAll('.mode-panel').forEach(function(p) { p.classList.remove('active'); });
+            var panel = document.getElementById('panel-' + mode);
+            if (panel) panel.classList.add('active');
+            if (mode === 'settings') loadSettings();
+            if (mode === 'plugins') loadPlugins();
+        }
+        async function doTranslate() {
+            var text = document.getElementById('source-text').value;
+            if (!text) return;
+            document.getElementById('translation-result').textContent = 'Translating...';
+            var resp = await apiCall('translate', {text: text});
+            if (resp.success) {
+                document.getElementById('translation-result').textContent = resp.data.translation;
+            } else {
+                document.getElementById('translation-result').textContent = 'Error: ' + resp.error;
+            }
+        }
+        async function processBook() {
+            var text = document.getElementById('book-text').value;
+            if (!text) return;
+            var resp = await apiCall('process_content', {mode: 'book', content: text});
+            if (resp.success && resp.data.chapters) {
+                var container = document.getElementById('book-chapters');
+                container.innerHTML = resp.data.chapters.map(function(ch) {
+                    return '<div class="plugin-card"><div class="name">' + ch.title + '</div><div style="font-size:12px;color:var(--text-secondary);">' + ch.content.substring(0, 100) + '...</div></div>';
+                }).join('');
+            }
+        }
+        async function processSupervisory() {
+            var text = document.getElementById('supervision-text').value;
+            if (!text) return;
+            var resp = await apiCall('process_content', {mode: 'supervision', content: text});
+            if (resp.success && resp.data.pairs) {
+                var container = document.getElementById('supervision-pairs');
+                container.innerHTML = resp.data.pairs.map(function(p) {
+                    return '<div class="result-box">' + p.source + '</div><div class="result-box" style="color:var(--success);">' + (p.target || '(pending)') + '</div>';
+                }).join('');
+            }
+        }
+        async function loadSettings() {
+            var resp = await apiCall('get_all_config');
+            if (!resp.success) return;
+            var grid = document.getElementById('settings-grid');
+            grid.innerHTML = '';
+            var flat = flattenObj(resp.data);
+            var keys = Object.keys(flat);
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                var val = flat[key];
+                var label = document.createElement('label');
+                label.textContent = key;
+                var input;
+                if (typeof val === 'boolean') {
+                    input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.checked = val;
+                    input.dataset.key = key;
+                    input.onchange = (function(k, el) { return function() { apiCall('set_config', {key: k, value: el.checked}); }; })(key, input);
+                } else if (typeof val === 'number') {
+                    if (key.indexOf('opacity') !== -1 || key.indexOf('threshold') !== -1) {
+                        input = document.createElement('input');
+                        input.type = 'range';
+                        input.min = '0'; input.max = '1'; input.step = '0.05';
+                        input.value = val;
+                        input.dataset.key = key;
+                        input.onchange = (function(k, el) { return function() { apiCall('set_config', {key: k, value: parseFloat(el.value)}); }; })(key, input);
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'number';
+                        input.value = val;
+                        input.dataset.key = key;
+                        input.onchange = (function(k, el) { return function() { apiCall('set_config', {key: k, value: parseInt(el.value, 10)}); }; })(key, input);
+                    }
+                } else if (Array.isArray(val)) {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = JSON.stringify(val);
+                    input.dataset.key = key;
+                    input.onchange = (function(k, el) { return function() { try { apiCall('set_config', {key: k, value: JSON.parse(el.value)}); } catch(e) {} }; })(key, input);
+                } else {
+                    var options = getEnumOptions(key);
+                    if (options) {
+                        input = document.createElement('select');
+                        for (var j = 0; j < options.length; j++) {
+                            var o = document.createElement('option');
+                            o.value = options[j];
+                            o.textContent = options[j];
+                            if (options[j] === val) o.selected = true;
+                            input.appendChild(o);
+                        }
+                        input.dataset.key = key;
+                        input.onchange = (function(k, el) { return function() { apiCall('set_config', {key: k, value: el.value}); }; })(key, input);
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = val;
+                        input.dataset.key = key;
+                        input.onchange = (function(k, el) { return function() { apiCall('set_config', {key: k, value: el.value}); }; })(key, input);
+                    }
+                }
+                grid.appendChild(label);
+                grid.appendChild(input);
+            }
+        }
+        function getEnumOptions(key) {
+            var enums = {
+                'api.provider': ['openai', 'ollama'],
+                'translation.mode': ['realtime', 'book', 'frame_select', 'supervision'],
+                'translation.source_language': ['ja', 'en', 'ko', 'fr', 'de', 'es', 'zh-CN'],
+                'translation.target_language': ['zh-CN', 'en', 'ja', 'ko', 'fr', 'de', 'es'],
+                'frontend.type': ['cli', 'webui', 'gui'],
+                'app.theme': ['light', 'dark'],
+                'app.language': ['en', 'zh-CN', 'ja']
+            };
+            return enums[key] || null;
+        }
+        function flattenObj(obj, prefix) {
+            prefix = prefix || '';
+            var result = {};
+            var keys = Object.keys(obj);
+            for (var i = 0; i < keys.length; i++) {
+                var k = keys[i];
+                var v = obj[k];
+                var fullKey = prefix ? prefix + '.' + k : k;
+                if (v && typeof v === 'object' && !Array.isArray(v)) {
+                    var nested = flattenObj(v, fullKey);
+                    var nkeys = Object.keys(nested);
+                    for (var j = 0; j < nkeys.length; j++) {
+                        result[nkeys[j]] = nested[nkeys[j]];
+                    }
+                } else {
+                    result[fullKey] = v;
+                }
+            }
+            return result;
+        }
+        async function loadPlugins() {
+            var resp = await apiCall('get_plugins');
+            if (!resp.success) return;
+            var container = document.getElementById('plugin-list');
+            container.innerHTML = '';
+            var names = Object.keys(resp.data);
+            for (var i = 0; i < names.length; i++) {
+                var name = names[i];
+                var info = resp.data[name];
+                var card = document.createElement('div');
+                card.className = 'plugin-card';
+                card.innerHTML = '<div class="name">' + name + '</div>'
+                    + '<div>v' + info.version + ' by ' + info.author + '</div>'
+                    + '<div>' + info.description + '</div>'
+                    + '<div class="status" style="color:' + (info.active ? 'var(--success)' : 'var(--text-secondary)') + ';">' + (info.active ? 'Active' : 'Inactive') + '</div>';
+                container.appendChild(card);
+            }
+        }
+        async function saveConfig() {
+            await apiCall('save_config');
+            alert('Settings saved!');
+        }
+        async function loadSidebar() {
+            var mem = await apiCall('get_memory');
+            if (mem.success) {
+                var d = mem.data;
+                document.getElementById('memory-info').textContent = 'Terms: ' + (d.terms || []).length + ', Notes: ' + (d.notes || []).length;
+                var tl = document.getElementById('term-list');
+                tl.innerHTML = (d.terms || []).map(function(t) { return '<li>' + t.source + ' \u2192 ' + t.target + '</li>'; }).join('');
+                var bl = document.getElementById('bookmark-list');
+                bl.innerHTML = (d.bookmarks || []).map(function(b) { return '<li>[' + b.position + '] ' + b.label + '</li>'; }).join('');
+            }
+        }
+        async function checkApi() {
+            var resp = await apiCall('check_api');
+            var el = document.getElementById('api-status');
+            if (resp.success) {
+                el.textContent = resp.data.provider + ': ' + (resp.data.available ? '\u2713 Connected' : '\u2717 Unavailable');
+                el.style.color = resp.data.available ? 'var(--success)' : 'var(--error)';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() { checkApi(); loadSidebar(); });
+        document.getElementById('source-text').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); doTranslate(); }
+        });
+    </script>
+</body>
+</html>
