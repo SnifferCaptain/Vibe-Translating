@@ -196,12 +196,12 @@
     </div>
     <div class="main-container">
         <div class="activity-bar">
-            <button class="icon-btn active" onclick="switchMode('realtime')" title="Real-time Translation">&#x1f504;</button>
-            <button class="icon-btn" onclick="switchMode('book')" title="Book Translation">&#x1f4da;</button>
-            <button class="icon-btn" onclick="switchMode('frame_select')" title="Frame Select">&#x1f5bc;&#xfe0f;</button>
-            <button class="icon-btn" onclick="switchMode('supervision')" title="Supervision">&#x1f4dd;</button>
-            <button class="icon-btn" onclick="switchMode('settings')" title="Settings">&#x2699;&#xfe0f;</button>
-            <button class="icon-btn" onclick="switchMode('plugins')" title="Plugins">&#x1f9e9;</button>
+            <button class="icon-btn active" onclick="switchMode('realtime', event)" title="Real-time Translation">&#x1f504;</button>
+            <button class="icon-btn" onclick="switchMode('book', event)" title="Book Translation">&#x1f4da;</button>
+            <button class="icon-btn" onclick="switchMode('frame_select', event)" title="Frame Select">&#x1f5bc;&#xfe0f;</button>
+            <button class="icon-btn" onclick="switchMode('supervision', event)" title="Supervision">&#x1f4dd;</button>
+            <button class="icon-btn" onclick="switchMode('settings', event)" title="Settings">&#x2699;&#xfe0f;</button>
+            <button class="icon-btn" onclick="switchMode('plugins', event)" title="Plugins">&#x1f9e9;</button>
         </div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header" id="sidebar-title">EXPLORER</div>
@@ -294,10 +294,10 @@
             });
             return resp.json();
         }
-        function switchMode(mode) {
+        function switchMode(mode, evt) {
             document.querySelectorAll('.icon-btn').forEach(function(b) { b.classList.remove('active'); });
-            if (event && event.target) {
-                var btn = event.target.closest('.icon-btn');
+            if (evt && evt.target) {
+                var btn = evt.target.closest('.icon-btn');
                 if (btn) btn.classList.add('active');
             }
             document.querySelectorAll('.mode-panel').forEach(function(p) { p.classList.remove('active'); });
@@ -378,7 +378,7 @@
                     input.type = 'text';
                     input.value = JSON.stringify(val);
                     input.dataset.key = key;
-                    input.onchange = (function(k, el) { return function() { try { apiCall('set_config', {key: k, value: JSON.parse(el.value)}); } catch(e) {} }; })(key, input);
+                    input.onchange = (function(k, el) { return function() { try { apiCall('set_config', {key: k, value: JSON.parse(el.value)}); } catch(e) { el.style.borderColor = 'var(--error)'; } }; })(key, input);
                 } else {
                     var options = getEnumOptions(key);
                     if (options) {
