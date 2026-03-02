@@ -1,0 +1,59 @@
+app:
+  name: "Vibe Translating"
+  version: "0.1.0"
+  language: "en"
+  theme: "light"
+
+api:
+  provider: "openai"  # openai or ollama
+  openai:
+    base_url: "https://api.openai.com/v1"
+    api_key: ""
+    model: "gpt-4o-mini"
+    max_tokens: 4096
+    temperature: 0.3
+  ollama:
+    base_url: "http://localhost:11434"
+    model: "llama3"
+    max_tokens: 4096
+    temperature: 0.3
+
+translation:
+  source_language: "ja"
+  target_language: "zh-CN"
+  mode: "realtime"  # realtime, book, frame_select, supervision
+  fast_mode: false
+  context_window: 2048
+  auto_detect_language: true
+
+agent:
+  enable_memory: true
+  auto_extract_terms: true
+  auto_summarize: true
+  summarize_threshold: 0.8
+  max_history_turns: 50
+  expert_mode: false
+  tab_completion: true
+  tab_completion_length: 50
+
+plugins:
+  enabled: true
+  directory: "plugins"
+  active: ["workspace_background"]
+
+frontend:
+  type: "cli"  # cli, webui, gui
+  webui:
+    host: "127.0.0.1"
+    port: 5000
+    debug: false
+  gui:
+    window_width: 1200
+    window_height: 800
+    sidebar_width: 250
+
+workspace:
+  background:
+    enabled: false
+    image_path: ""
+    opacity: 0.1
