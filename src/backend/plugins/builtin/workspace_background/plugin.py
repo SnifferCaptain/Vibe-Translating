@@ -31,10 +31,11 @@ class WorkspaceBackgroundPlugin(PluginBase):
 
     def activate(self, context: dict[str, Any]) -> None:
         """Activate the plugin."""
+        self._enabled = True
         config = context.get("config")
         if config:
             self._enabled = config.get(
-                "workspace.background.enabled", False
+                "workspace.background.enabled", True
             )
             self._image_path = config.get(
                 "workspace.background.image_path", ""
@@ -42,7 +43,6 @@ class WorkspaceBackgroundPlugin(PluginBase):
             self._opacity = config.get(
                 "workspace.background.opacity", 0.1
             )
-        self._enabled = True
 
     def deactivate(self) -> None:
         """Deactivate the plugin."""

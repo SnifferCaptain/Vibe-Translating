@@ -177,7 +177,6 @@ class PluginManager:
 
     def _ensure_parent_packages(self) -> None:
         """Ensure backend and backend.plugins packages are in sys.modules."""
-        src_dir = Path(__file__).resolve().parents[2]
         if "backend" not in sys.modules:
             importlib.import_module("backend")
         if "backend.plugins" not in sys.modules:
