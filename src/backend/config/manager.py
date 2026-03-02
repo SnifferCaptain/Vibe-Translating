@@ -6,7 +6,6 @@ via dot-notation paths.
 """
 
 import copy
-import os
 from pathlib import Path
 from typing import Any, Optional
 
